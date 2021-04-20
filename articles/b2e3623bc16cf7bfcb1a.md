@@ -2,20 +2,21 @@
 title: "DockerFileに最新のNode.jsを追加した話"
 emoji: "📘"
 type: "tech" 
-topics: ["Docker" ,"dockerfile" ,"DockerHub" ,"Node.js" ,"wasm"]
+topics: ["Docker" ,"dockerfile" ,"DockerHub" ,"Node" ,"wasm"]
 published: false
 ---
+
 他で作成していたイメージにNode.jsをインストールしたかったが、調べてもすぐには出てこなかったためメモ
 
-##前提
+## 前提
 Rustでwasmを触ってみようとして必要だった。
 busterベースのコンテナを使用。
 
 
-##結論
+## 結論
 こちらを追加した
 
-```
+```dockerfile
 ENV NODE_VERSION 15.0.1
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
@@ -53,7 +54,7 @@ v15.0.1
 7.0.3
 ```
 
-##考えたこと
+## 考えたこと
 最初はaptでインストールを行ったがバージョンが古く(10前後だった記憶)、せっかくなので最新にしようと考えた。しかし適当に調べても"正しい"方法が見つからないためDockerHubへ。
 https://hub.docker.com/_/node
 
@@ -62,6 +63,6 @@ https://hub.docker.com/_/node
 
 見事動いた。
 以上。
-#出典
+# 出典
 https://hub.docker.com/_/node
 https://github.com/nodejs/docker-node/blob/d58d7e65c4f92ef22a190b0ca835ce62464ff3ba/15/buster/Dockerfile
