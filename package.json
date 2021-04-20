@@ -1,0 +1,22 @@
+{
+  "name": "zenn-article",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uesugi6111/zenn-article.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/uesugi6111/zenn-article/issues"
+  },
+  "homepage": "https://github.com/uesugi6111/zenn-article#readme",
+  "dependencies": {
+    "zenn-cli": "^0.1.79"
+  }
+}
