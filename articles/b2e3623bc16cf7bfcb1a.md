@@ -3,7 +3,7 @@ title: "DockerFileに最新のNode.jsを追加した話"
 emoji: "📘"
 type: "tech" 
 topics: ["Docker" ,"dockerfile" ,"DockerHub" ,"Node" ,"wasm"]
-published: false
+published: true
 ---
 
 他で作成していたイメージにNode.jsをインストールしたかったが、調べてもすぐには出てこなかったためメモ

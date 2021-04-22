@@ -3,7 +3,7 @@ title: "JavaからRustをJNA(Java Native Access)で実行する"
 emoji: "👏"
 type: "tech" 
 topics: ["Java","Rust","JNA","Maven","ffi"]
-published: false
+published: true
 ---
 ## はじめに
 ### 動機
