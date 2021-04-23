@@ -5,16 +5,21 @@ type: "tech"
 topics: ["Java","Rust","JNA","Maven","ffi"]
 published: true
 ---
+
 ## はじめに
+
 ### 動機
+
 システムプログラミング言語(?)であるRustの話を聞いていると、FFI([Foreign function interface](https://ja.wikipedia.org/wiki/Foreign_function_interface "FFI"))の話が少なからず出てきます。
 ということで普段書いているJavaから呼び出します。
 
 ### 対象読者
+
 JavaとRustが多少読め、MavenというJava用のプロジェクト管理用ツールが存在していることを知っている方。
 難しいことはしておらず、プロジェクトの雛形を作成したレベルの話です。
 
 ## 環境
+
 開発環境はVSCodeを使用します。
 RustとJavaの実行環境はDockerで構築します。
 **DockerFiile**
@@ -22,7 +27,6 @@ RustとJavaの実行環境はDockerで構築します。
 [弄ったもの](https://github.com/uesugi6111/vscode-remote-try-java/blob/master/.devcontainer/Dockerfile "DockerFile")
 
 そこにRustのコンパイラをインストールします。以下を追記。
-
 
 ```Docker:DockerFiile
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -47,13 +51,16 @@ RUN apt-get update &&  apt-get install -y lldb python3-minimal libpython3.7 pyth
 ```
 
 内容としては
+
 - 環境変数の追加
 - 必要なrustのコンポーネントをインストール
 - Rustで必要になるデバッガ、python、gccのインストール
 を行っています
 
 インストールするRustをここで**nightly**としている理由は後述します。
+
 ## Rust
+
 今回Rust側で作成したファイルは以下です
 
 ```:tree
@@ -73,7 +80,9 @@ workspace
 workspaceのトップレベルでcargoのコマンドが使いたかったため、このような構成となりました。
 
 以下解説
+
 ### Cargo.toml
+
 ```toml:Cargo.toml
 [workspace]
 members = ["sample-jna"]
@@ -81,10 +90,12 @@ members = ["sample-jna"]
 [profile.release]
 lto = true
 ```
+
 上2行でworkspace内のsample-jnaディレクトリをプロジェクトとして認識しています。
 **lto = true**はbuild時のファイルサイズ削減用のオプションです。
 
 ### sample-jna/Cargo.toml
+
 ```toml:Cargo.toml
 [package]
 name = "sample-jna"
@@ -95,10 +106,12 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib"]
 ```
+
 **[package]**は**cargo new** で作成されるもので問題ありません。
 **[lib]**の**crate-type**がコンパイル後のタイプとなります。別言語から呼び出す想定のダイナミックライブラリは、**cdylib**を指定するよう[リファレンス](https://doc.rust-lang.org/reference/linkage.html "linkage")に書かれているので、それに従います。
 
 ### lib.rs
+
 ここがライブラリ本体となります。今回は以前書いて残していたエラトステネスの篩に似たアルゴリズムで引数までの素数を列挙し、その個数を返すだけのプログラムを用意しました。
 
 ```Rust:lib.rs
@@ -123,15 +136,18 @@ pub extern fn sieve_liner(n: i32) -> i32{
     primes.len() as i32
 }
 ```
+
 通常のコンパイルでは関数名は他の名称に変換されてしまい、ほかプログラムなどから呼び出す際に、名前がわからなくなってしまいます。それを防ぐために**#[no_mangle]**(直訳:切り刻み無し)を関数に付与します。
 
 ### cargo-build.sh
+
 ```shell:cargo-build.sh
 #!/bin/bash
 cargo build --release -Z unstable-options --out-dir ./src/main/resources
 ```
+
 ライブラリのbuildスクリプトになります。
-**--release** 
+**--release**
 releaseオプションでのbuildを指定します。
 **-Z unstable-options --out-dir ./src/main/resources**
 build後に出力するディレクトリを指定するオプションとなっています。しかしこのオプションが使えるのは**nightly**のみとなっています。
@@ -140,9 +156,10 @@ build後に出力するディレクトリを指定するオプションとなっ
 ディレクトリの指定先はJava側でコンパイルされたときにjarファイル内に配置される場所に設定しました。
 
 ## Java
+
 Java側で作成したファイルは以下になります。
 
-```
+```:bash
 workspace
 │  pom.xml
 └─src
@@ -155,9 +172,11 @@ workspace
       │
       └─resources
 ```
+
 やけにディレクトリが深いですが、特に意味はありません。
 
 ### pom.xml
+
 以下を**\<dependencies>**へ追記します
 
 ```xml:pom.xml
@@ -170,6 +189,7 @@ workspace
 
 
 ### App.java
+
 ```Java:App.java
 
 package com.mycompany.app;
@@ -234,6 +254,7 @@ public class App {
 }
 
 ```
+
 Rust側に実装したロジックと同様のものを実装し、実行時間を比較します。
 ライブラリの呼び出しは
 **SampleJna INSTANCE = Native.load("/libsample_jna.so", SampleJna.class);**
@@ -242,14 +263,17 @@ Native.load(ライブラリのPath,ライブラリを定義したのinterface)�
 今回ライブラリはmain/resources直下に配置する予定なので絶対パス(?)で表記しています。
 
 ## Maven
+
 ここまでで本来動作確認はできるのですが、jarにすることを考えた際の設定もしてみました。
 jarを作成するまでの流れ
+
 - Rust をコンパイルしてJava側のresourcesディレクトリに配置
 - Java側のコンパイル
 
 これをMavenの機能を利用し、ワンアクションで行います。
 
 ### maven-assembly-plugin
+
 jarに依存ライブラリを含める
 
 ```xml:maven-assembly-plugin
@@ -281,8 +305,8 @@ jarに依存ライブラリを含める
 ```
 
 ### exec-maven-plugin
-maven の処理中でシェルスクリプトを実行するために必要となります。
 
+maven の処理中でシェルスクリプトを実行するために必要となります。
 
 ```xml:exec-maven-plugin
       <plugin>
@@ -304,16 +328,15 @@ maven の処理中でシェルスクリプトを実行するために必要と�
         </executions>
       </plugin>
 ```
+
 少し解説
-**phase**　
+**phase**
 シェルスクリプトを実行するタイミングを設定します。Mavenではライフサイクルという概念が存在するので、実行したいタイミングに合ったものを指定します。[リファレンス](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#Lifecycle_Reference "Lifecycle_Reference")
 **executable**
 ここで実行したい対象を指定します。
 
-
-
-
 ### pom.xml
+
 ここまで適応し終えたファイル
 
 ```xml:pom.xml
@@ -399,20 +422,23 @@ maven の処理中でシェルスクリプトを実行するために必要と�
 ```
 
 ## 実行
+
 workspaceのルートで以下を実行
 
 ```shell
 mvn package
 ```
+
 すると
 
-```
+```log
 [INFO] --- maven-assembly-plugin:3.3.0:single (make-assembly) @ my-app ---
 [INFO] Building jar: /workspace/target/my-app-1.0-SNAPSHOT-jar-with-dependencies.jar
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
 ```
+
 のようなログが出力されてコンパイルが完了します。
 
 あとは表示されたパスに出力されているjarを実行してください。
@@ -420,22 +446,26 @@ mvn package
 ```shell:例
 java -jar ./target/my-app-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
+
 出力
 
-```
+```bash
 N = 100000000
 FFI  :1668ms
 Java :3663ms
 ```
+
 10^8までの素数の数のカウントでかかった、JavaとFFI(Rust)の時間(ms)が出力されました。
 Nを小さくするとJavaの方が早くなるため、大きなオーバーヘッドがあるのでしょうかわかりません。
 
 # さいご
+
 とりあえずは動いたということで一旦完了とします。
 使ったソースになります
 https://github.com/uesugi6111/java-rust
 
 普段触らない部分の話が多くまだわからないことが多いですがぼちぼち調べていきます。
 *謎*
+
 - JNA以外のJavaからの呼び出し方法
 - Rustの関数での単純な数値以外の返し方
